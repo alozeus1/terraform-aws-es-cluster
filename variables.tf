@@ -174,9 +174,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "cost_tags" {
-  description = "Cost allocation tags to apply to all resources."
-  type        = map(string)
-  default     = {}
-}

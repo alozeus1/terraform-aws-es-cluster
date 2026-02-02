@@ -9,7 +9,7 @@ resource "aws_security_group" "opensearch" {
 
   tags = merge(var.tags, {
     Name = var.name
-  }, var.cost_tags)
+  })
 }
 
 resource "aws_security_group_rule" "secure_cidrs" {
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_log_group" "opensearch" {
   for_each          = var.log_publishing_enabled && length(var.log_types) > 0 ? toset(var.log_types) : []
   name              = "/aws/opensearch/${var.name}/${lower(each.value)}"
   retention_in_days = var.log_group_retention_in_days
-  tags              = merge(var.tags, var.cost_tags)
+  tags              = var.tags
 }
 
 data "aws_iam_policy_document" "opensearch_logs" {
@@ -147,7 +147,7 @@ resource "aws_opensearch_domain" "opensearch" {
 
   tags = merge(var.tags, {
     Name = var.name
-  }, var.cost_tags)
+  })
 
   depends_on = [
     aws_iam_service_linked_role.default,

@@ -58,8 +58,4 @@ POLICY
   tags = {
     Environment = "dev"
   }
-
-  cost_tags = {
-    CostCenter = "cc-1234"
-  }
 }

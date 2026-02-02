@@ -3,6 +3,8 @@ AWS OpenSearch Service Terraform Module
 
 Enterprise-ready Terraform module for provisioning an AWS OpenSearch Service domain in a VPC with HTTPS enforcement, encryption, log publishing, cost allocation tags, and optional Route 53 DNS.
 
+## Usage
+
 ## Module Usage
 
 Modules are designed to be sourced from your internal modules repository using HTTPS authentication. Use the following format in Terraform configurations:
@@ -11,11 +13,14 @@ Modules are designed to be sourced from your internal modules repository using H
 module "opensearch" {
   source = "git::https://git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=develop"
 
-  name       = "search-dev"
-  vpc_id     = "vpc-xxxxx"
-  subnet_ids = ["subnet-aaa", "subnet-bbb"]
+module "opensearch" {
+  source = "git::https://github.com/egarbi/terraform-aws-es-cluster"
 
-  ingress_allow_cidr_blocks = ["10.20.0.0/16"]
+  name       = "example"
+  vpc_id     = "vpc-xxxxx"
+  subnet_ids = ["subnet-one", "subnet-two"]
+
+  ingress_allow_cidr_blocks = ["10.20.0.0/16", "10.22.0.0/16"]
   access_policies           = <<POLICY
 {
   "Version": "2012-10-17",
@@ -24,7 +29,7 @@ module "opensearch" {
       "Action": "es:*",
       "Principal": "*",
       "Effect": "Allow",
-      "Resource": "arn:aws:es:us-east-1:123456789012:domain/search-dev/*"
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/example/*"
     }
   ]
 }
@@ -34,68 +39,7 @@ POLICY
     Environment = "dev"
     Owner       = "platform"
   }
-
-  cost_tags = {
-    CostCenter = "cc-1234"
-    Product    = "search"
-  }
 }
-```
-
-## Step-by-step deployment guidance
-
-1. **Confirm prerequisites**
-   - VPC and subnets for the OpenSearch domain.
-   - IAM permissions to create OpenSearch, security groups, and CloudWatch log groups.
-   - (Optional) Route 53 hosted zone ID if you need a DNS record.
-
-2. **Add the module to your environment**
-   - In your live repo, add a folder like:
-     `Plateng-terraform-live/aws/development/opensearch/`
-   - Define your module configuration in `main.tf` using the example above.
-
-3. **Pin the module version**
-   - Use a tag, branch, or commit hash in the `source` URL (see Version Pinning below).
-
-4. **Initialize and plan**
-   ```bash
-   terraform init
-   terraform plan
-   ```
-
-5. **Apply to deploy**
-   ```bash
-   terraform apply
-   ```
-
-6. **Validate outputs**
-   - Use `terraform output` to retrieve `opensearch_endpoint` and `opensearch_dashboard_endpoint`.
-
-## Version Pinning
-
-Always pin to a specific version or commit for production environments:
-
-```hcl
-# Pin to a specific tag
-source = "git::https://git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=v1.0.0"
-
-# Pin to a specific branch
-source = "git::https://git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=develop"
-
-# Pin to a specific commit
-source = "git::https://git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=abc1234"
-```
-
-## Authentication
-
-For HTTPS authentication, configure your Git credentials:
-
-```bash
-# Using credential helper
-git config --global credential.helper store
-
-# Or use a personal access token in the URL
-source = "git::https://username:token@git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=develop"
 ```
 
 ## Inputs
@@ -136,7 +80,6 @@ source = "git::https://username:token@git.edusuc.net/WEBFORX/Plateng-terraform-m
 | log_group_retention_in_days | Retention (in days) for OpenSearch CloudWatch logs. | number | `30` | no |
 | zone_id | Route 53 zone ID for the optional DNS record. | string | `null` | no |
 | tags | Tags to apply to all resources. | map(string) | `{}` | no |
-| cost_tags | Cost allocation tags to apply to all resources. | map(string) | `{}` | no |
 
 ## Outputs
 
