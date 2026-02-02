@@ -1,78 +1,91 @@
-AWS Elasticsearch Service Terraform Module
-==========================================
+AWS OpenSearch Service Terraform Module
+======================================
 
-Usage:
+Enterprise-ready Terraform module for provisioning an AWS OpenSearch Service domain in a VPC with HTTPS enforcement, encryption, log publishing, and optional Route 53 DNS.
+
+## Usage
 
 ```hcl
 data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
-module "es-cluster" {
+module "opensearch" {
   source = "git::https://github.com/egarbi/terraform-aws-es-cluster"
 
-  name                      = "example"
-  vpc_id                    = "vpc-xxxxx"
-  subnet_ids                = [ "subnet-one" ]
-  zone_id                   = "ZA863HSKDDD9"
-  itype                     = "m4.large.elasticsearch"
-  ingress_allow_cidr_blocks = [ "10.20.0.0/16", "10.22.0.0/16" ]
-  access_policies           = <<CONFIG
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "es:*",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/example/*"
-        }
-    ]
-}
-CONFIG
+  name       = "example"
+  vpc_id     = "vpc-xxxxx"
+  subnet_ids = ["subnet-one", "subnet-two"]
 
+  ingress_allow_cidr_blocks = ["10.20.0.0/16", "10.22.0.0/16"]
+  access_policies           = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "es:*",
+      "Principal": "*",
+      "Effect": "Allow",
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/example/*"
+    }
+  ]
+}
+POLICY
+
+  tags = {
+    Environment = "dev"
+    Owner       = "platform"
+  }
 }
 ```
-
- Note On Multi-AZ Support:<br>
- AWS Supports up to 3 AZ's for a multi-az configuration. Understand that if you operate in more than 3 AZ's and you choose to deploy master nodes, only 3 AZ's will be supported and any more than that may result in TF returning AWS API errors.<br> 
- For more information see [here](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains-dedicatedmasternodes.html)
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-----:|:-----:|
-| access\_policies | IAM policy document specifying the access policies for the domain. | string | `""` | no |
-| create\_iam\_service\_linked\_role | Control the creation of the default service role, set it to false if you have already created it. | bool | true | no |
-| dedicated\_master | Indicates whether our cluster have dedicated master nodes enabled. | string | `"false"` | no |
-| elasticsearch\_version | Elastic Search Service cluster version number. | string | `"5.5"` | no |
-| encryption\_enabled | Enable encription in Elastic Search. | string | `"false"` | no |
-| encryption\_kms\_key\_id | Enable encription in Elastic Search. | string | `""` | no |
-| icount | Elastic Search Service cluster Ec2 instance number. | string | `"1"` | no |
-| indices\_fielddata\_cache\_size | Percentage of Java heap space allocated to field data. | string | `""` | no |
-| indices\_query\_bool\_max\_clause\_count | Maximum number of clauses allowed in a Lucene boolean query. | string | `"1024"` | no |
-| ingress\_allow\_cidr\_blocks | Specifies the ingress CIDR blocks allowed. | list | `<list>` | no |
-| ingress\_allow\_security\_groups | Specifies the ingress security groups allowed. | list | `<list>` | no |
-| itype | Elastic Search Service cluster Ec2 instance type. | string | `"m4.large.elasticsearch"` | no |
-| mcount | Elastic Search Service cluster dedicated master Ec2 instance number. | string | `"0"` | no |
-| mtype | Elastic Search Service cluster dedicated master Ec2 instance type. | string | `""` | no |
-| name | Elastic Search Service cluster name. | string | n/a | yes |
-| rest\_action\_multi\_allow\_explicit\_index | Specifies whether explicit references to indices are allowed inside the body of HTTP requests. | string | `"true"` | no |
-| snapshot\_start | Elastic Search Service maintenance/snapshot start time. | string | `"0"` | no |
-| subnet\_ids | List of VPC Subnet IDs for the Elastic Search Service EndPoints will be created. | list | n/a | yes |
-| volume\_size | Default size of the EBS volumes. | string | `"35"` | no |
-| volume\_type | Default type of the EBS volumes. | string | `"gp2"` | no |
-| vpc\_id | Vpc id where the Elastic Search Service cluster will be launched. | string | n/a | yes |
-| zone\_awareness | Indicates whether zone awareness is enabled. | string | `"false"` | no |
-| zone\_id | Route 53 zone id where the DNS record will be created. | string | `""` | no |
+| name | OpenSearch domain name. | string | n/a | yes |
+| subnet_ids | List of VPC subnet IDs where the OpenSearch endpoints are created. | list(string) | n/a | yes |
+| vpc_id | VPC ID where the OpenSearch domain will be launched. | string | n/a | yes |
+| engine_version | OpenSearch engine version (e.g., OpenSearch_2.11). | string | `"OpenSearch_2.11"` | no |
+| instance_type | OpenSearch data node instance type. | string | `"m6g.large.search"` | no |
+| instance_count | Number of data nodes in the cluster. | number | `2` | no |
+| dedicated_master_enabled | Whether dedicated master nodes are enabled. | bool | `true` | no |
+| dedicated_master_type | Dedicated master node instance type. | string | `"m6g.large.search"` | no |
+| dedicated_master_count | Number of dedicated master nodes. | number | `3` | no |
+| zone_awareness_enabled | Whether zone awareness is enabled. | bool | `true` | no |
+| availability_zone_count | Number of availability zones for zone awareness. Defaults to 2 or 3 based on subnet count. | number | `null` | no |
+| ebs_enabled | Whether to enable EBS for data nodes. | bool | `true` | no |
+| volume_size | EBS volume size (GiB). | number | `100` | no |
+| volume_type | EBS volume type. | string | `"gp3"` | no |
+| snapshot_start_hour | Hour (0-23) for automated snapshots. | number | `0` | no |
+| encrypt_at_rest_enabled | Enable encryption at rest. | bool | `true` | no |
+| encryption_kms_key_id | KMS key ID for encryption at rest. | string | `null` | no |
+| node_to_node_encryption_enabled | Enable node-to-node encryption. | bool | `true` | no |
+| enforce_https | Enforce HTTPS for the domain endpoint. | bool | `true` | no |
+| tls_security_policy | TLS security policy for the domain endpoint. | string | `"Policy-Min-TLS-1-2-2019-07"` | no |
+| advanced_options | Advanced OpenSearch options. | map(string) | `{}` | no |
+| access_policies | IAM policy document specifying access policies for the domain. | string | `null` | no |
+| create_iam_service_linked_role | Whether to create the service-linked role for OpenSearch. | bool | `true` | no |
+| ingress_allow_cidr_blocks | Ingress CIDR blocks allowed to access the domain. | list(string) | `[]` | no |
+| ingress_allow_security_groups | Ingress security group IDs allowed to access the domain. | list(string) | `[]` | no |
+| log_publishing_enabled | Enable CloudWatch log publishing. | bool | `true` | no |
+| log_types | Log types to publish to CloudWatch. | list(string) | `[
+  "INDEX_SLOW_LOGS",
+  "SEARCH_SLOW_LOGS",
+  "ES_APPLICATION_LOGS"
+]` | no |
+| log_group_retention_in_days | Retention (in days) for OpenSearch CloudWatch logs. | number | `30` | no |
+| zone_id | Route 53 zone ID for the optional DNS record. | string | `null` | no |
+| tags | Tags to apply to all resources. | map(string) | `{}` | no |
 
 ## Outputs
+
 | Name | Description |
 |------|-------------|
-| es\_arn | Amazon Resource Name (ARN) of the domain |
-| es\_availability\_zones\_ids | If the domain was created inside a VPC, the names of the availability zones the configured subnet_ids were created inside. |
-| es\_domain\_id | Unique identifier for the domain. |
-| es\_endpoint | Domain-specific endpoint used to submit index, search, and data upload requests. |
-| es\_kibana\_endpoint | Domain-specific endpoint for kibana without https scheme. |
-| es\_sg | The SG id created to allow communication with ElasticSearch cluster. |
-| es\_vpc\_ids | The VPC ID if the domain was created inside a VPC. |
+| opensearch_arn | Amazon Resource Name (ARN) of the OpenSearch domain. |
+| opensearch_domain_id | Unique identifier for the OpenSearch domain. |
+| opensearch_endpoint | Domain-specific endpoint used for OpenSearch requests. |
+| opensearch_dashboard_endpoint | Domain-specific endpoint for OpenSearch Dashboards. |
+| opensearch_security_group_id | Security group ID created for OpenSearch access. |
+| opensearch_vpc_id | VPC ID where the OpenSearch domain is created. |
+| opensearch_availability_zones | Availability zones used by the OpenSearch domain. |
