@@ -1,135 +1,182 @@
-// Required
 variable "name" {
-  description = "Elastic Search Service cluster name."
+  description = "OpenSearch domain name."
   type        = string
 }
 
 variable "subnet_ids" {
-  description = "List of VPC Subnet IDs for the Elastic Search Service EndPoints will be created."
+  description = "List of VPC subnet IDs where the OpenSearch endpoints are created."
   type        = list(string)
 }
 
 variable "vpc_id" {
-  description = "Vpc id where the Elastic Search Service cluster will be launched."
+  description = "VPC ID where the OpenSearch domain will be launched."
   type        = string
 }
 
-// Optional
-variable "create_iam_service_linked_role" {
-  description = "Control the creation of the default service role, set it to false if you have already created it"
+variable "engine_version" {
+  description = "OpenSearch engine version (e.g., OpenSearch_2.11)."
+  type        = string
+  default     = "OpenSearch_2.11"
+}
+
+variable "instance_type" {
+  description = "OpenSearch data node instance type."
+  type        = string
+  default     = "m6g.large.search"
+}
+
+variable "instance_count" {
+  description = "Number of data nodes in the cluster."
+  type        = number
+  default     = 2
+}
+
+variable "dedicated_master_enabled" {
+  description = "Whether dedicated master nodes are enabled."
+  type        = bool
   default     = true
 }
 
-variable "zone_id" {
-  default     = ""
-  description = "Route 53 zone id where the DNS record will be created."
+variable "dedicated_master_type" {
+  description = "Dedicated master node instance type."
   type        = string
+  default     = "m6g.large.search"
 }
 
-variable "access_policies" {
-  default     = ""
-  description = "IAM policy document specifying the access policies for the domain."
-  type        = string
+variable "dedicated_master_count" {
+  description = "Number of dedicated master nodes."
+  type        = number
+  default     = 3
 }
 
-variable "dedicated_master" {
-  default     = false
-  description = "Indicates whether our cluster have dedicated master nodes enabled."
-  type        = string
+variable "zone_awareness_enabled" {
+  description = "Whether zone awareness is enabled."
+  type        = bool
+  default     = true
 }
 
-variable "encryption_enabled" {
-  default     = "false"
-  description = "Enable encription in Elastic Search."
-  type        = string
+variable "availability_zone_count" {
+  description = "Number of availability zones for zone awareness. Defaults to 2 or 3 based on subnet count."
+  type        = number
+  default     = null
 }
 
-variable "encryption_kms_key_id" {
-  default     = ""
-  description = "Enable encription in Elastic Search."
-  type        = string
-}
-
-variable "elasticsearch_version" {
-  default     = "5.5"
-  description = "Elastic Search Service cluster version number."
-  type        = string
-}
-
-variable "icount" {
-  default     = 1
-  description = "Elastic Search Service cluster Ec2 instance number."
-  type        = string
-}
-
-variable "indices_fielddata_cache_size" {
-  default     = ""
-  description = "Percentage of Java heap space allocated to field data."
-  type        = string
-}
-
-variable "indices_query_bool_max_clause_count" {
-  default     = 1024
-  description = "Maximum number of clauses allowed in a Lucene boolean query."
-  type        = string
-}
-
-variable "ingress_allow_cidr_blocks" {
-  default     = []
-  description = "Specifies the ingress CIDR blocks allowed."
-  type        = list(string)
-}
-
-variable "ingress_allow_security_groups" {
-  default     = []
-  description = "Specifies the ingress security groups allowed."
-  type        = list(string)
-}
-
-variable "itype" {
-  default     = "m4.large.elasticsearch"
-  description = "Elastic Search Service cluster Ec2 instance type."
-  type        = string
-}
-
-variable "mcount" {
-  default     = 0
-  description = "Elastic Search Service cluster dedicated master Ec2 instance number."
-  type        = string
-}
-
-variable "mtype" {
-  default     = ""
-  description = "Elastic Search Service cluster dedicated master Ec2 instance type."
-  type        = string
-}
-
-variable "zone_awareness" {
-  default     = false
-  description = "Indicates whether zone awareness is enabled."
-  type        = string
-}
-
-variable "rest_action_multi_allow_explicit_index" {
-  default     = "true"
-  description = "Specifies whether explicit references to indices are allowed inside the body of HTTP requests."
-  type        = string
-}
-
-variable "snapshot_start" {
-  default     = 0
-  description = "Elastic Search Service maintenance/snapshot start time."
-  type        = string
+variable "ebs_enabled" {
+  description = "Whether to enable EBS for data nodes."
+  type        = bool
+  default     = true
 }
 
 variable "volume_size" {
-  default     = "35"
-  description = "Default size of the EBS volumes."
-  type        = string
+  description = "EBS volume size (GiB)."
+  type        = number
+  default     = 100
 }
 
 variable "volume_type" {
-  default     = "gp2"
-  description = "Default type of the EBS volumes."
+  description = "EBS volume type."
   type        = string
+  default     = "gp3"
+}
+
+variable "snapshot_start_hour" {
+  description = "Hour (0-23) for automated snapshots."
+  type        = number
+  default     = 0
+}
+
+variable "encrypt_at_rest_enabled" {
+  description = "Enable encryption at rest."
+  type        = bool
+  default     = true
+}
+
+variable "encryption_kms_key_id" {
+  description = "KMS key ID for encryption at rest."
+  type        = string
+  default     = null
+}
+
+variable "node_to_node_encryption_enabled" {
+  description = "Enable node-to-node encryption."
+  type        = bool
+  default     = true
+}
+
+variable "enforce_https" {
+  description = "Enforce HTTPS for the domain endpoint."
+  type        = bool
+  default     = true
+}
+
+variable "tls_security_policy" {
+  description = "TLS security policy for the domain endpoint."
+  type        = string
+  default     = "Policy-Min-TLS-1-2-2019-07"
+}
+
+variable "advanced_options" {
+  description = "Advanced OpenSearch options."
+  type        = map(string)
+  default     = {}
+}
+
+variable "access_policies" {
+  description = "IAM policy document specifying access policies for the domain."
+  type        = string
+  default     = null
+}
+
+variable "create_iam_service_linked_role" {
+  description = "Whether to create the service-linked role for OpenSearch."
+  type        = bool
+  default     = true
+}
+
+variable "ingress_allow_cidr_blocks" {
+  description = "Ingress CIDR blocks allowed to access the domain."
+  type        = list(string)
+  default     = []
+}
+
+variable "ingress_allow_security_groups" {
+  description = "Ingress security group IDs allowed to access the domain."
+  type        = list(string)
+  default     = []
+}
+
+variable "log_publishing_enabled" {
+  description = "Enable CloudWatch log publishing."
+  type        = bool
+  default     = true
+}
+
+variable "log_types" {
+  description = "Log types to publish to CloudWatch."
+  type        = list(string)
+  default     = ["INDEX_SLOW_LOGS", "SEARCH_SLOW_LOGS", "ES_APPLICATION_LOGS"]
+}
+
+variable "log_group_retention_in_days" {
+  description = "Retention (in days) for OpenSearch CloudWatch logs."
+  type        = number
+  default     = 30
+}
+
+variable "zone_id" {
+  description = "Route 53 zone ID for the optional DNS record."
+  type        = string
+  default     = null
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "cost_tags" {
+  description = "Cost allocation tags to apply to all resources."
+  type        = map(string)
+  default     = {}
 }

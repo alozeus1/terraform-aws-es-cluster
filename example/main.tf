@@ -1,14 +1,14 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
-      version = "~> 2.0"
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
-# Configure the AWS Provider
+
 provider "aws" {
-  region  = "eu-central-1"
+  region = "eu-central-1"
 }
 
 data "aws_vpc" "default" {
@@ -32,29 +32,34 @@ data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
-module "es-cluster" {
+module "opensearch" {
   source = "../"
 
-  name                      = "example"
-  vpc_id                    = data.aws_vpc.default.id
-  subnet_ids                = [data.aws_subnet.default.0.id, data.aws_subnet.default.1.id]
-  zone_id                   = data.aws_route53_zone.selected.zone_id
-  itype                     = "m4.large.elasticsearch"
-  icount                    = 2
-  zone_awareness            = true
-  ingress_allow_cidr_blocks = [data.aws_vpc.default.cidr_block]
-  access_policies           = <<CONFIG
-{   
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "es:*",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/example/*"
-        }
-    ]
-}
-CONFIG
+  name       = "example"
+  vpc_id     = data.aws_vpc.default.id
+  subnet_ids = [data.aws_subnet.default.0.id, data.aws_subnet.default.1.id]
+  zone_id    = data.aws_route53_zone.selected.zone_id
 
+  ingress_allow_cidr_blocks = [data.aws_vpc.default.cidr_block]
+  access_policies           = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "es:*",
+      "Principal": "*",
+      "Effect": "Allow",
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/example/*"
+    }
+  ]
+}
+POLICY
+
+  tags = {
+    Environment = "dev"
+  }
+
+  cost_tags = {
+    CostCenter = "cc-1234"
+  }
 }
