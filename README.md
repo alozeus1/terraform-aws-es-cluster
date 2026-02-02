@@ -1,14 +1,17 @@
 AWS OpenSearch Service Terraform Module
 ======================================
 
-Enterprise-ready Terraform module for provisioning an AWS OpenSearch Service domain in a VPC with HTTPS enforcement, encryption, log publishing, and optional Route 53 DNS.
+Enterprise-ready Terraform module for provisioning an AWS OpenSearch Service domain in a VPC with HTTPS enforcement, encryption, log publishing, cost allocation tags, and optional Route 53 DNS.
 
 ## Usage
 
-```hcl
-data "aws_region" "current" {}
+## Module Usage
 
-data "aws_caller_identity" "current" {}
+Modules are designed to be sourced from your internal modules repository using HTTPS authentication. Use the following format in Terraform configurations:
+
+```hcl
+module "opensearch" {
+  source = "git::https://git.edusuc.net/WEBFORX/Plateng-terraform-modules.git//aws/opensearch?ref=develop"
 
 module "opensearch" {
   source = "git::https://github.com/egarbi/terraform-aws-es-cluster"
